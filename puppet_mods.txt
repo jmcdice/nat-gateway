@@ -1,0 +1,44 @@
+3 Puppet changes are needed.
+
+On the cluster fronted, modify the following files:
+
+/etc/puppet/modules/horizon/templates/local_settings.py.erb
+/etc/puppet/modules/ha_proxy/manifests/ha_services.pp
+/etc/puppet/modules/openstack_config/manifests/params.pp
+
+
+Details:
+1. Tell horizon to use set an SSL proxy header
+
+   vim /etc/puppet/modules/horizon/templates/local_settings.py.erb
+
+   uncomment:
+   SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+
+2. Tell haproxy to set a forward ssl header
+
+   vim /etc/puppet/modules/ha_proxy/manifests/ha_services.pp
+
+   Find:
+      'redirect' => 'scheme https if !{ ssl_fc }',
+   below this line, add:
+      'reqadd'   => [ 'X-Forwarded-Proto:\ https',
+                      'X-Forwarded-Protocol:\ https', ],
+
+# Update console location
+vim /etc/puppet/modules/openstack_config/manifests/params.pp
+
+Change:
+      value    => "http://${public_vip_endpoint}:6080/vnc_auto.html"},
+to:
+      value    => "http://135.2.114.209:6080/vnc_auto.html"},
+
+Where 135.2.114.209 = x_edn IP
+
+
+
+# Deploy new config
+puppet agent -t
+salt -E 'os-keystone*|compute*' cmd.run 'puppet agent -t'
+
+
