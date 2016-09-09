@@ -305,9 +305,9 @@ function create_nats() {
       $login "iptables -t nat -A POSTROUTING -o eth0 -p tcp -m tcp -d $feip --dport 80 -j SNAT --to-source $mgt_nat_ip"
       echo "Ok"
 
-      # CloudBand NAT
+      # Infrastructure NAT
       if [ -n "$cb_vip" ]; then
-         echo -n "$vm: Adding NAT for CloudBand Management: "
+         echo -n "$vm: Adding NAT for Management: "
 	 $login "iptables -t nat -A PREROUTING -p tcp -m tcp -d $edn_nat_ip --dport 8443 -j DNAT --to-destination $cb_vip:443"
          $login "iptables -t nat -A POSTROUTING -o eth0 -p tcp -m tcp -d $cb_vip --dport 443 -j SNAT --to-source $mgt_nat_ip"
          echo "Ok"
@@ -360,9 +360,9 @@ function test_rules() {
          echo "Failed"
       fi
 
-      # Test for CloudBand
+      # Test for Management UI 
       if [ -n "$cb_vip" ]; then
-         echo -n "$vm: Testing CloudBand Management: "
+         echo -n "$vm: Testing Management UI: "
          $test_login "curl -sk https://$edn_nat_ip:8443/|grep -iq document"
          if [ $? == '0' ]; then
             echo "Success"
